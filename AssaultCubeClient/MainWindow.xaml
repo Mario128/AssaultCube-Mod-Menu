@@ -1,0 +1,20 @@
+﻿<Window x:Class="AssaultCubeClient.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:AssaultCubeClient"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="161.849" Width="411.303" Loaded="MyWindow_loaded" Background="#FFBABABA">
+    <Grid x:Name="MyGrid" Margin="0,0,3.8,-1">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="5*"/>
+            <ColumnDefinition Width="39*"/>
+        </Grid.ColumnDefinitions>
+        <Button x:Name="Button01" Content="Attach" HorizontalAlignment="Right" Width="105" Margin="0,43,28.8,0" Height="38" VerticalAlignment="Top" Click="Button01_Click" Grid.Column="1" RenderTransformOrigin="0.234,0.626"/>
+        <CheckBox x:Name="Ammo_Checkbox" Content="Ammo" HorizontalAlignment="Left" Margin="8.6,29,0,0" VerticalAlignment="Top" Height="26" Width="85" Checked="Ammo_Checkbox_Checked" Background="White" Grid.Column="1"/>
+        <CheckBox x:Name="Health_Checkbox" Content="Health" HorizontalAlignment="Left" Margin="8.6,55,0,0" VerticalAlignment="Top" Height="26" Width="85" Checked="Health_Checkbox_Checked" Grid.Column="1"/>
+        <CheckBox x:Name="Aimbot_Checkbox" Content="Ambot" HorizontalAlignment="Left" Margin="8.6,81,0,0" VerticalAlignment="Top" Checked="Aimbot_Checkbox_Checked" Unchecked="Aimbot_Checkbox_Unchecked" Grid.Column="1" Height="15" Width="54"/>
+
+    </Grid>
+</Window>
