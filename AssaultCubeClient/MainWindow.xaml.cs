@@ -26,7 +26,7 @@ namespace AssaultCubeClient
         static extern short GetAsyncKeyState(Keys vkey);
 
         private static Mem Mem = new Mem();
-        private static Thread aimbotThread = new Thread(StartAimbot);
+        private Thread aimbotThread = new Thread(StartAimbot);
         private static ManualResetEvent aimbotMre = new ManualResetEvent(false);
 
         public MainWindow()
@@ -34,7 +34,7 @@ namespace AssaultCubeClient
             InitializeComponent();
         }
 
-        private void Button01_Click(object sender, RoutedEventArgs e)
+        private void Attach_Click(object sender, RoutedEventArgs e)
         { 
             int PID = Mem.GetProcIdFromName("ac_client");
             if(PID > 0)
@@ -78,13 +78,13 @@ namespace AssaultCubeClient
 
             }
         }  
-        private static void SetAmmo()
+        private void SetAmmo()
         {
                 Mem.WriteMemory(Offsets.PlayerBase + Offsets.Ammo, "int", "999999");
                 Mem.WriteMemory(Offsets.PlayerBase + Offsets.SecAmmo, "int", "999999");
                 Mem.WriteMemory(Offsets.PlayerBase + Offsets.GrenadeAmmo, "int", "999999");     
         }
-        private static void SetHealth()
+        private void SetHealth()
         {
                 Mem.WriteMemory(Offsets.PlayerBase + Offsets.Health, "int", "999999");
            
@@ -169,6 +169,11 @@ namespace AssaultCubeClient
             Mem.WriteMemory(Offsets.PlayerBase + Offsets.ViewX, "float", Convert.ToString(viewX));
             Mem.WriteMemory(Offsets.PlayerBase + Offsets.ViewY, "float", Convert.ToString(viewY));
 
+        }
+
+        private void ESP ()
+        {
+            //Coming soon
         }
     }
 
