@@ -8,21 +8,26 @@ using AssaultCubeClient.Model;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using System.Drawing;
+using ezOverLay;
 
 namespace AssaultCubeClient
 {
     public partial class MainWindow : Window
     {
+        [System.ComponentModel.Browsable(false)]
+        public static bool CheckForIllegalCrossThreadCalls { get; set; }
+
         [DllImport("user32.dll")]
         static extern short GetAsyncKeyState(Keys vkey);
-  
+
         private static Mem Mem = new Mem();
         private Thread aimbotThread = new Thread(StartAimbot);
         private static ManualResetEvent aimbotMre = new ManualResetEvent(false);
 
+        public ez ezO = new ez();
         Graphics g;
         Pen teampen = new Pen(Color.Blue, 3);
-        Pen enemypen = new Pen(Color.Red, 3);    
+        Pen enemypen = new Pen(Color.Red, 3);
 
         public MainWindow()
         {
@@ -30,9 +35,9 @@ namespace AssaultCubeClient
         }
 
         private void Attach_Click(object sender, RoutedEventArgs e)
-        { 
+        {
             int PID = Mem.GetProcIdFromName("ac_client");
-            if(PID > 0)
+            if (PID > 0)
             {
                 Mem.OpenProcess(PID);
                 System.Windows.MessageBox.Show("Found process, " + PID.ToString());
@@ -44,8 +49,8 @@ namespace AssaultCubeClient
         }
         private void MyWindow_loaded(object sender, RoutedEventArgs e)
         {
-        
-            //CheckForIllegalCrossFieldCalls = false;
+
+            CheckForIllegalCrossThreadCalls = false;
             int PID = Mem.GetProcIdFromName("ac_client");
             if (PID > 0)
             {
@@ -56,20 +61,29 @@ namespace AssaultCubeClient
 
         private static void StartAimbot()
         {
-            while(true)
+            while (true)
             {
                 if (GetAsyncKeyState(Keys.D1) < 0)
                 {
                     aimbotMre.WaitOne();
                     Player localPlayer = GetLocal();
-                    
+                    List<Player> enemyPlayers = new List<Player>();
                     List<Player> players = GetPlayers(localPlayer);
-                   
-                    players = players.OrderBy(o => o.Magnitude).ToList();
 
-                    if(players.Count() > 0)
+                    foreach (Player p in players)
                     {
-                        Aim(localPlayer, players[0]);
+                        if (p.Team != localPlayer.Team)
+                        {
+                            enemyPlayers.Add(p);
+                        }
+                    }
+
+                    enemyPlayers = enemyPlayers.OrderBy(o => o.Magnitude).ToList();
+
+
+                    if (enemyPlayers.Count() > 0)
+                    {
+                        Aim(localPlayer, enemyPlayers[0]);
                     }
 
                     Thread.Sleep(5);
@@ -77,22 +91,22 @@ namespace AssaultCubeClient
                 Thread.Sleep(3);
 
             }
-        }  
+        }
         private void SetAmmo()
         {
-                Mem.WriteMemory(Offsets.PlayerBase + Offsets.Ammo, "int", "999999");
-                Mem.WriteMemory(Offsets.PlayerBase + Offsets.SecAmmo, "int", "999999");
-                Mem.WriteMemory(Offsets.PlayerBase + Offsets.GrenadeAmmo, "int", "999999");     
+            Mem.WriteMemory(Offsets.PlayerBase + Offsets.Ammo, "int", "999999");
+            Mem.WriteMemory(Offsets.PlayerBase + Offsets.SecAmmo, "int", "999999");
+            Mem.WriteMemory(Offsets.PlayerBase + Offsets.GrenadeAmmo, "int", "999999");
         }
         private void SetHealth()
         {
-                Mem.WriteMemory(Offsets.PlayerBase + Offsets.Health, "int", "999999");
-           
+            Mem.WriteMemory(Offsets.PlayerBase + Offsets.Health, "int", "999999");
+
         }
 
         private void Ammo_Checkbox_Checked(object sender, RoutedEventArgs e)
         {
-            SetAmmo(); 
+            SetAmmo();
         }
         private void Health_Checkbox_Checked(object sender, RoutedEventArgs e)
         {
@@ -127,9 +141,9 @@ namespace AssaultCubeClient
             List<Player> players = new List<Player>();
             int playerCount = Mem.ReadInt(Offsets.PlayerCount);
 
-            for(int i = 0; i<playerCount; i++)
+            for (int i = 0; i < playerCount; i++)
             {
-                var currentStr = Offsets.EntityList + ",0x" + (i*0x4).ToString("X");
+                var currentStr = Offsets.EntityList + ",0x" + (i * 0x4).ToString("X");
 
                 Player player = new Player()
                 {
@@ -141,7 +155,7 @@ namespace AssaultCubeClient
                 };
                 player.Magnitude = GetMag(local, player);
 
-                if((player.Health > 0 && player.Health < 102)&& (player.Team != local.Team))
+                if (player.Health > 0 && player.Health < 102)
                 {
                     players.Add(player);
                 }
@@ -152,10 +166,9 @@ namespace AssaultCubeClient
         private static double GetMag(Player local, Player entity)
         {
             double mag = Math.Sqrt(Math.Pow(entity.X - local.X, 2) + Math.Pow(entity.Y - local.Y, 2) + Math.Pow(entity.Z - local.Z, 2));
-            
             return mag;
         }
-        private static void Aim (Player player, Player enemy)
+        private static void Aim(Player player, Player enemy)
         {
             double deltaX = enemy.X - player.X;
             double deltaY = enemy.Y - player.Y;
@@ -164,7 +177,6 @@ namespace AssaultCubeClient
             double distance = Math.Sqrt(deltaX * deltaX + deltaY * deltaY);
 
             int viewX = Convert.ToInt32((Math.Atan2(deltaY, deltaX) * 180 / Math.PI) + 90);
-           
             int viewY = Convert.ToInt32(Math.Atan2(deltaZ, distance) * 180 / Math.PI);
 
             Mem.WriteMemory(Offsets.PlayerBase + Offsets.ViewX, "float", Convert.ToString(viewX));
@@ -172,13 +184,81 @@ namespace AssaultCubeClient
 
         }
 
-        private void ESP ()
+        private void ESP()
         {
             while (true)
             {
-                Player player = GetLocal();
-                List<Player> players = GetPlayers(player);
+                Player local = GetLocal();
+                List<Player> players = GetPlayers(local);
+
+                foreach(Player p in players)
+                {
+                    float[] m = IntoTheMatrix();
+                    p.Bottom = WorldToScreen(m, (float)p.X, (float)p.Y, (float)p.Z, (int)Width, (int)Height, false);
+                    p.Top = WorldToScreen(m, (float)p.X, (float)p.Y, (float)p.Z, (int)Width, (int)Height, false);
+
+                }
             }
+        }
+
+        float[] IntoTheMatrix()
+        {
+           
+            //byte weil genauer
+            byte[] buffer = new byte[4 * 16];
+            float[] ViewMatrix = new float[16];
+
+            var bytes = Mem.ReadBytes(Offsets.ViewMatrix, (long)buffer.Length);
+           
+            for (int i = 0; i < ViewMatrix.Length; i++)
+            {
+                ViewMatrix[i] = BitConverter.ToSingle(bytes, (i * 4));
+            }
+
+            return ViewMatrix;
+        }
+
+        //Von 3D zu 2D
+        System.Drawing.Point WorldToScreen(float[] mtx, float x, float y, float z, int width, int height, bool head)
+        { 
+           if(head)
+            {
+                z += 58;
+            }
+            var twoD = new System.Drawing.Point();
+
+            /*View Matrix Array
+             0    1    2    3
+             4    5    6    7
+             8    9   10   11
+            12   13   14   15
+            */
+
+            float screenW = (mtx[12] * x) + (mtx[13] * y) + (mtx[14] * z) + mtx[15];
+
+            //Spieler ist sichtbar auf meinem Bildschirm
+            if(screenW > 0.001f)
+            {
+                float screenX = (mtx[0] * x) + (mtx[1] * y) + (mtx[2] * z) + mtx[3];
+                float screenY = (mtx[4] * x) + (mtx[5] * y) + (mtx[6] * z) + mtx[7];
+
+                float camX = width / 2f;
+                float camY = height / 2f;
+
+                float X = camX + (camX * screenX / screenW);
+                float Y = camY + (camY * screenY / screenW);
+
+                twoD.X = (int)X;
+                twoD.Y = (int)Y;
+
+                return twoD;
+            }
+            //nicht sichtbar
+            else
+            {
+                return new System.Drawing.Point(-99, -99);
+            }
+            
         }
 
         private void ESP_Checked(object sender, RoutedEventArgs e)

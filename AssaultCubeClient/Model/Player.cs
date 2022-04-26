@@ -21,7 +21,8 @@ namespace AssaultCubeClient.Model
         public Point Top { get; set; }
         public Point Bottom { get; set; }
         public Flag Team { get; set; }
-        public Rectangle Rectangle { get; set; };
+        public Rectangle Rectangle { get; set; }
+        float[] ViewMatrix = new float[16];
 
 
         public int Health
