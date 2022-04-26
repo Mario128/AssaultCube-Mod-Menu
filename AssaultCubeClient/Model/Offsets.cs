@@ -21,5 +21,7 @@ namespace AssaultCubeClient.Model
         public static string Z = ",0x30";
         public static string ViewY = ",0x38";
         public static string ViewX = ",0x34";
+        public static string ViewMatrix = "ac_client.exe+17DFFC";
+        public static string Team = ",30C";
     }
 }

@@ -1,22 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using Memory;
 using AssaultCubeClient.Model;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using System.Drawing;
 
 namespace AssaultCubeClient
 {
@@ -24,10 +15,14 @@ namespace AssaultCubeClient
     {
         [DllImport("user32.dll")]
         static extern short GetAsyncKeyState(Keys vkey);
-
+  
         private static Mem Mem = new Mem();
         private Thread aimbotThread = new Thread(StartAimbot);
         private static ManualResetEvent aimbotMre = new ManualResetEvent(false);
+
+        Graphics g;
+        Pen teampen = new Pen(Color.Blue, 3);
+        Pen enemypen = new Pen(Color.Red, 3);    
 
         public MainWindow()
         {
@@ -41,6 +36,10 @@ namespace AssaultCubeClient
             {
                 Mem.OpenProcess(PID);
                 System.Windows.MessageBox.Show("Found process, " + PID.ToString());
+            }
+            else
+            {
+                System.Windows.MessageBox.Show("Process not found");
             }
         }
         private void MyWindow_loaded(object sender, RoutedEventArgs e)
@@ -63,6 +62,7 @@ namespace AssaultCubeClient
                 {
                     aimbotMre.WaitOne();
                     Player localPlayer = GetLocal();
+                    
                     List<Player> players = GetPlayers(localPlayer);
                    
                     players = players.OrderBy(o => o.Magnitude).ToList();
@@ -117,7 +117,8 @@ namespace AssaultCubeClient
             {
                 X = Mem.ReadFloat(Offsets.PlayerBase + Offsets.X),
                 Y = Mem.ReadFloat(Offsets.PlayerBase + Offsets.Y),
-                Z = Mem.ReadFloat(Offsets.PlayerBase + Offsets.Z)
+                Z = Mem.ReadFloat(Offsets.PlayerBase + Offsets.Z),
+                Team = Mem.ReadInt(Offsets.PlayerBase + Offsets.Team) == 1 ? Flag.Blue : Flag.Red
             };
             return player;
         }
@@ -135,11 +136,12 @@ namespace AssaultCubeClient
                     X = Convert.ToDouble(Mem.ReadFloat(currentStr + Offsets.X)),
                     Y = Convert.ToDouble(Mem.ReadFloat(currentStr + Offsets.Y)),
                     Z = Convert.ToDouble(Mem.ReadFloat(currentStr + Offsets.Z)),
-                    Health = Mem.ReadInt(currentStr + Offsets.Health)
+                    Health = Mem.ReadInt(currentStr + Offsets.Health),
+                    Team = Mem.ReadInt(currentStr + Offsets.Team) == 1 ? Flag.Blue : Flag.Red
                 };
                 player.Magnitude = GetMag(local, player);
 
-                if(player.Health > 0 && player.Health < 102)
+                if((player.Health > 0 && player.Health < 102)&& (player.Team != local.Team))
                 {
                     players.Add(player);
                 }
@@ -157,13 +159,12 @@ namespace AssaultCubeClient
         {
             double deltaX = enemy.X - player.X;
             double deltaY = enemy.Y - player.Y;
-            
-            int viewX = Convert.ToInt32((Math.Atan2(deltaY, deltaX) * 180 / Math.PI) + 90);
-
             double deltaZ = enemy.Z - player.Z;
 
             double distance = Math.Sqrt(deltaX * deltaX + deltaY * deltaY);
-            
+
+            int viewX = Convert.ToInt32((Math.Atan2(deltaY, deltaX) * 180 / Math.PI) + 90);
+           
             int viewY = Convert.ToInt32(Math.Atan2(deltaZ, distance) * 180 / Math.PI);
 
             Mem.WriteMemory(Offsets.PlayerBase + Offsets.ViewX, "float", Convert.ToString(viewX));
@@ -173,7 +174,16 @@ namespace AssaultCubeClient
 
         private void ESP ()
         {
-            //Coming soon
+            while (true)
+            {
+                Player player = GetLocal();
+                List<Player> players = GetPlayers(player);
+            }
+        }
+
+        private void ESP_Checked(object sender, RoutedEventArgs e)
+        { 
+
         }
     }
 
