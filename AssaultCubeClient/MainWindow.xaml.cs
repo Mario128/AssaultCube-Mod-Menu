@@ -14,20 +14,17 @@ namespace AssaultCubeClient
 {
     public partial class MainWindow : Window
     {
-        [System.ComponentModel.Browsable(false)]
+       /* [System.ComponentModel.Browsable(false)]
         public static bool CheckForIllegalCrossThreadCalls { get; set; }
-
+        */
         [DllImport("user32.dll")]
         static extern short GetAsyncKeyState(Keys vkey);
 
         private static Mem Mem = new Mem();
         private Thread aimbotThread = new Thread(StartAimbot);
+        private Thread espThread;
+        private ManualResetEvent espMre = new ManualResetEvent(false);
         private static ManualResetEvent aimbotMre = new ManualResetEvent(false);
-
-        public ez ezO = new ez();
-        Graphics g;
-        Pen teampen = new Pen(Color.Blue, 3);
-        Pen enemypen = new Pen(Color.Red, 3);
 
         public MainWindow()
         {
@@ -49,8 +46,8 @@ namespace AssaultCubeClient
         }
         private void MyWindow_loaded(object sender, RoutedEventArgs e)
         {
-
-            CheckForIllegalCrossThreadCalls = false;
+         
+           // CheckForIllegalCrossThreadCalls = false;
             int PID = Mem.GetProcIdFromName("ac_client");
             if (PID > 0)
             {
@@ -84,11 +81,9 @@ namespace AssaultCubeClient
                     if (enemyPlayers.Count() > 0)
                     {
                         Aim(localPlayer, enemyPlayers[0]);
-                    }
-
-                    Thread.Sleep(5);
+                    }                
                 }
-                Thread.Sleep(3);
+                Thread.Sleep(5);
 
             }
         }
@@ -188,16 +183,21 @@ namespace AssaultCubeClient
         {
             while (true)
             {
-                Player local = GetLocal();
-                List<Player> players = GetPlayers(local);
+                espMre.WaitOne();
+                Player Local = GetLocal();
+                List<Player>Players = GetPlayers(Local);
+                ESP espForm = AssaultCubeClient.ESP.Instance;
 
-                foreach(Player p in players)
+                foreach (Player p in Players)
                 {
                     float[] m = IntoTheMatrix();
-                    p.Bottom = WorldToScreen(m, (float)p.X, (float)p.Y, (float)p.Z, (int)Width, (int)Height, false);
-                    p.Top = WorldToScreen(m, (float)p.X, (float)p.Y, (float)p.Z, (int)Width, (int)Height, false);
-
+                    p.Bottom = WorldToScreen(m, (float)p.X, (float)p.Y, (float)p.Z, espForm.Width, espForm.Height, false);
+                    p.Top = WorldToScreen(m, (float)p.X, (float)p.Y, (float)p.Z, espForm.Width, espForm.Height, true);
                 }
+ 
+                espForm.passPlayers(Local, Players);
+                espForm.RefreshMyPanel();
+                Thread.Sleep(10);
             }
         }
 
@@ -246,7 +246,7 @@ namespace AssaultCubeClient
                 float camY = height / 2f;
 
                 float X = camX + (camX * screenX / screenW);
-                float Y = camY + (camY * screenY / screenW);
+                float Y = camY - (camY * screenY / screenW);
 
                 twoD.X = (int)X;
                 twoD.Y = (int)Y;
@@ -262,8 +262,34 @@ namespace AssaultCubeClient
         }
 
         private void ESP_Checked(object sender, RoutedEventArgs e)
-        { 
+        {
+            if(Mem.GetProcIdFromName("ac_client") <= 0)
+            {
+                return;
+            }
+            ESP ESPForm = AssaultCubeClient.ESP.Instance;
+            ESPForm.Show();
+            if(espThread == null)
+            {
+                espThread = new Thread(ESP);
 
+                if (!espThread.IsAlive)
+                {
+
+                    espThread.Start();
+                }
+            }
+          
+            espMre.Set();
+        }
+
+        private void ESP_Checkbox_Unchecked(object sender, RoutedEventArgs e)
+        {
+            ESP ESPForm = AssaultCubeClient.ESP.Instance;
+            ESPForm.Close();
+            AssaultCubeClient.ESP.Instance = null;
+            espMre.Reset();
+            
         }
     }
 

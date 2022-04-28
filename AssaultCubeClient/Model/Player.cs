@@ -5,11 +5,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-enum Flag { Red, Blue, notSpecified }
+public enum Flag { Red, Blue, notSpecified }
 
 namespace AssaultCubeClient.Model
 {
-    class Player
+    public class Player
     {
         private int _health;
   
@@ -17,11 +17,9 @@ namespace AssaultCubeClient.Model
         public double Y { get; set; }
         public double Z { get; set; }
         public double Magnitude { get; set; }
-        public bool IsFriendly { get; set; }
         public Point Top { get; set; }
         public Point Bottom { get; set; }
         public Flag Team { get; set; }
-        public Rectangle Rectangle { get; set; }
         float[] ViewMatrix = new float[16];
 
 
@@ -47,24 +45,14 @@ namespace AssaultCubeClient.Model
             this.Magnitude = magnitude;
         }
 
-        public Player(int health, double x, double y, double z, double magnitude, bool isFriendly, Point top, Point bottom) 
-        {
-            this.Health = health;
-            this.X = x;
-            this.Y = y;
-            this.Z = z;
-            this.Magnitude = magnitude;
-            this.IsFriendly = isFriendly;
-            this.Top = top;
-            this.Bottom = bottom;
-        }
-
         public Rectangle CreateRectangle()
         {
+            Point p = new Point(Bottom.X - (Bottom.Y - Top.Y) / 4, Top.Y);
+            Size s = new Size((Bottom.Y - Top.Y) / 2, Bottom.Y - Top.Y);
             return new Rectangle()
             {
-                Location = new Point(Bottom.X - (Bottom.Y - Top.Y) / 4, Top.Y),
-                Size = new Size((Bottom.Y - Top.Y) / 2, Bottom.X - Top.X)
+                Location = p,
+                Size = s
             };
         }
 

@@ -37,4 +37,4 @@ C:\Users\Mario\Desktop\myprojects\AssaultCubeClient\AssaultCubeClient\obj\Debug\
 C:\Users\Mario\Desktop\myprojects\AssaultCubeClient\AssaultCubeClient\obj\Debug\AssaultCubeClient.exe
 C:\Users\Mario\Desktop\myprojects\AssaultCubeClient\AssaultCubeClient\obj\Debug\AssaultCubeClient.pdb
 C:\Users\Mario\Desktop\myprojects\AssaultCubeClient\AssaultCubeClient\bin\Debug\ezOverLay.dll
-C:\Users\Mario\Desktop\myprojects\AssaultCubeClient\AssaultCubeClient\obj\Debug\AssaultCubeClient.Form1.resources
+C:\Users\Mario\Desktop\myprojects\AssaultCubeClient\AssaultCubeClient\obj\Debug\AssaultCubeClient.ESP.resources
